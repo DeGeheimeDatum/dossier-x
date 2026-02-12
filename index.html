@@ -79,6 +79,49 @@
       pointer-events: none;
     }
 
+    .mobile-desktop-note{
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background:
+        radial-gradient(800px 520px at 24% 20%, rgba(255,255,255,0.05), transparent 72%),
+        linear-gradient(180deg, rgba(8,10,14,0.95), rgba(6,8,12,0.96));
+      backdrop-filter: blur(1.5px);
+    }
+
+    .mobile-desktop-note .note-card{
+      width: min(460px, 92vw);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background:
+        radial-gradient(120% 140% at 95% 0%, rgba(255,116,58,0.25), transparent 48%),
+        linear-gradient(165deg, rgba(31,37,47,0.96), rgba(14,18,26,0.96));
+      box-shadow: 0 22px 56px rgba(0,0,0,0.42);
+      padding: 18px 18px 16px;
+      text-align: center;
+      color: rgba(240,245,255,0.95);
+    }
+
+    .mobile-desktop-note h2{
+      margin: 0 0 8px;
+      font-family: "IM Fell English SC", Georgia, serif;
+      font-size: clamp(26px, 7vw, 32px);
+      letter-spacing: 0.02em;
+      line-height: 1.08;
+    }
+
+    .mobile-desktop-note p{
+      margin: 0;
+      font-family: "IM Fell English", Georgia, serif;
+      font-size: clamp(18px, 4.8vw, 22px);
+      line-height: 1.35;
+      color: rgba(226,235,249,0.96);
+    }
+
     .briefing-card{
       width: min(640px, 93vw);
       background:
@@ -490,6 +533,9 @@
     }
 
     @media (pointer: coarse){
+      .briefing-overlay{ display: none; }
+      .mobile-desktop-note{ display: flex; }
+
       .corner-hotspot{
         right: 0;
         bottom: calc(env(safe-area-inset-bottom) + 14px);
@@ -533,7 +579,7 @@
       <div class="date">
         <p class="k">Teamuitje</p>
         <p class="d">30 juni</p>
-        <div class="t">12.00 tot 19.00 uur</div>
+        <div class="t">12.00 tot ±20.00 uur</div>
       </div>
     </div>
 
@@ -672,6 +718,13 @@
     </div>
   </div>
 
+  <div class="mobile-desktop-note" id="mobileDesktopNote" aria-live="polite">
+    <div class="note-card">
+      <h2>Even een tip</h2>
+      <p>Deze ervaring werkt het best op een computer. Open deze link op desktop voor de volledige speurtocht.</p>
+    </div>
+  </div>
+
   <script>
     const scene = document.getElementById("scene");
     const hotspot = document.getElementById("hotspot");
@@ -680,6 +733,7 @@
     const delftTile = document.getElementById("delftTile");
     const briefingOverlay = document.getElementById("briefingOverlay");
     const briefingStart = document.getElementById("briefingStart");
+    const mobileDesktopNote = document.getElementById("mobileDesktopNote");
     const MOVE_EPS = 0.35;
     const START_NORM_X = 0.68;
     const START_NORM_Y = 0.58;
@@ -696,6 +750,10 @@
     let hotspotHalfH = 60;
     let clipRadius = 90;
     let interactiveStarted = false;
+
+    function isMobileBlocked(){
+      return window.matchMedia("(pointer: coarse)").matches;
+    }
 
     function setMouseVars(clientX, clientY){
       const r = scene.getBoundingClientRect();
@@ -897,6 +955,11 @@
     }
 
     function setupBriefing(){
+      if (isMobileBlocked()){
+        if (mobileDesktopNote) mobileDesktopNote.hidden = false;
+        return;
+      }
+
       if (!briefingOverlay || !briefingStart) {
         init();
         return;
