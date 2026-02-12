@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>easter egg</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#1a1a1a;
+      --bg2:#0f0f0f;
+      --map-bg:
+        linear-gradient(180deg, rgba(255,245,228,0.10), rgba(255,245,228,0.03)),
+        repeating-linear-gradient(110deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(20deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 26px),
+        linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.60));
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{ height:100%; margin:0; }
+
+    body{
+      overflow:hidden;
+      background:
+        var(--map-bg),
+        radial-gradient(1200px 700px at 70% 45%, rgba(255,255,255,0.08), transparent 55%),
+        radial-gradient(900px 600px at 30% 30%, rgba(255,255,255,0.05), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      display:grid;
+      place-items:start center;
+      padding-top:min(8vh, 58px);
+      font-family: Georgia, "Times New Roman", serif;
+      position: relative;
+      isolation: isolate;
+    }
+
+    body::after{
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(1200px 900px at 70% 50%, transparent 45%, rgba(0,0,0,0.39) 85%),
+        radial-gradient(900px 650px at 30% 40%, transparent 50%, rgba(0,0,0,0.28) 85%),
+        linear-gradient(90deg, rgba(0,0,0,0.21), rgba(0,0,0,0.05) 42%, rgba(0,0,0,0.14));
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .hanger{
+      position: relative;
+      width:min(86vw, 640px);
+      height:min(88vh, 760px);
+      display:grid;
+      place-items:start center;
+      filter: drop-shadow(0 12px 28px rgba(0,0,0,0.22));
+    }
+
+    .nail{
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, #d8d8d8 0 30%, #8f8f8f 63%, #666 100%);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+      z-index: 3;
+    }
+
+    .pendulum{
+      position:absolute;
+      top: 12px;
+      transform-origin: top center;
+      animation: sway 3.6s ease-in-out infinite alternate;
+      width:min(78vw, 560px);
+      display:grid;
+      justify-items:center;
+    }
+
+    .strings{
+      position: absolute;
+      top: 0;
+      width: 190px;
+      height: 134px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .string{
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 132px;
+      background: linear-gradient(180deg, #d4d8de, #8d95a2);
+      transform-origin: top center;
+      box-shadow: 0 0 0.5px rgba(0,0,0,0.4);
+    }
+
+    .string.left{
+      left: 50%;
+      transform: translateX(-50%) rotate(-29deg);
+    }
+
+    .string.right{
+      left: 50%;
+      transform: translateX(-50%) rotate(29deg);
+    }
+
+    .tile-svg{
+      position: relative;
+      z-index: 2;
+      margin-top: 86px;
+      width: min(78vw, 560px);
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 12px 24px rgba(0,0,0,0.18));
+    }
+
+    .back-link{
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom) + 10px);
+      transform: translateX(-50%);
+      display: block;
+      font-family: "IM Fell English", Georgia, serif;
+      font-size: clamp(12px, 1vw, 14px);
+      color: rgba(255,255,255,0.92);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 1px;
+      line-height: 1;
+      letter-spacing: 0.015em;
+      text-shadow: 0 3px 10px rgba(0,0,0,0.45);
+      z-index: 20;
+      cursor: pointer;
+      transition: color 100ms linear;
+    }
+
+    .back-link:hover,
+    .back-link:focus-visible{
+      color: #ffffff;
+      border-bottom-color: rgba(255,255,255,0.95);
+    }
+
+    @keyframes sway{
+      from{ transform: rotate(-3.6deg); }
+      to  { transform: rotate(3.6deg); }
+    }
+
+    @media (max-width: 700px){
+      .strings{ width: 150px; height: 116px; }
+      .string{ height: 114px; }
+      .tile-svg{ margin-top: 76px; width: min(84vw, 480px); }
+      .back-link{
+        bottom: calc(env(safe-area-inset-bottom) + 8px);
+        font-size: clamp(11px, 3.2vw, 13px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hanger" aria-label="Delftsblauw tegeltje aan een spijker">
+    <div class="nail" aria-hidden="true"></div>
+    <div class="pendulum">
+      <div class="strings" aria-hidden="true">
+        <div class="string left"></div>
+        <div class="string right"></div>
+      </div>
+      <img class="tile-svg" src="tegeltje.svg" alt="Delftsblauw tegeltje">
+    </div>
+  </div>
+  <a class="back-link" href="index.html">Terug naar het zoeken</a>
+</body>
+</html>

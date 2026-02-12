@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Save the date</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Save the date font -->
+  <link href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&display=swap" rel="stylesheet">
+  <!-- Sherlock-achtige fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#1a1a1a;
+      --bg2:#0f0f0f;
+
+      /* lens */
+      --lens-size: 300px;
+      --lens-scale: 1.7;
+
+      /* muis/vinger positie */
+      --mx: 70vw;
+      --my: 55vh;
+
+      /* Transparantie van het glas (lager = transparanter) */
+      --glass-opacity: 0.14;
+
+      /* achtergrond (kaart-textuur) herbruikbaar */
+      --map-bg:
+        linear-gradient(180deg, rgba(255,245,228,0.10), rgba(255,245,228,0.03)),
+        repeating-linear-gradient(110deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(20deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 26px),
+        radial-gradient(900px 700px at 75% 55%, rgba(180,120,60,0.22), transparent 60%),
+        radial-gradient(700px 500px at 80% 20%, rgba(140,90,45,0.18), transparent 55%),
+        radial-gradient(600px 450px at 60% 75%, rgba(120,80,40,0.14), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.60));
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{ height: 100%; margin: 0; }
+
+    body{
+      background:
+        radial-gradient(1200px 700px at 70% 45%, rgba(255,255,255,0.08), transparent 55%),
+        radial-gradient(900px 600px at 30% 30%, rgba(255,255,255,0.05), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      color: rgba(255,255,255,0.93);
+      overflow: hidden;
+    }
+
+    .briefing-overlay{
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background:
+        radial-gradient(800px 480px at 22% 28%, rgba(255,255,255,0.05), transparent 70%),
+        linear-gradient(180deg, rgba(7,9,12,0.87), rgba(5,7,10,0.9));
+      backdrop-filter: blur(1.5px);
+      transition: opacity 260ms ease, visibility 260ms ease;
+    }
+
+    .briefing-overlay.is-hidden{
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .briefing-card{
+      width: min(640px, 93vw);
+      background:
+        radial-gradient(150% 140% at 95% 10%, rgba(255,116,58,0.42), transparent 44%),
+        radial-gradient(120% 120% at 10% 92%, rgba(255,84,30,0.22), transparent 50%),
+        linear-gradient(165deg, rgba(31,37,47,0.96), rgba(15,19,27,0.96));
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow:
+        0 22px 56px rgba(0,0,0,0.48),
+        0 0 0 1px rgba(255,126,72,0.18) inset;
+      border-radius: 22px;
+      padding: 16px;
+    }
+
+    .briefing-bubble{
+      position: relative;
+      background: linear-gradient(180deg, rgba(244,248,255,0.93), rgba(225,234,247,0.9));
+      border: 1px solid rgba(255,255,255,0.72);
+      color: #191614;
+      border-radius: 16px;
+      padding: clamp(14px, 2.4vw, 20px);
+      margin: 0;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.24);
+      text-align: center;
+    }
+
+    .briefing-avatar{
+      width: 98px;
+      height: 98px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 10px auto;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.88), rgba(197,212,235,0.86) 60%, rgba(122,145,176,0.58) 100%);
+      border: 1px solid rgba(255,255,255,0.84);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.22);
+    }
+
+    .briefing-avatar img{
+      width: 82px;
+      height: 82px;
+      display: block;
+    }
+
+    .briefing-title{
+      margin: 0 0 8px 0;
+      font-family: "IM Fell English SC", Georgia, serif;
+      font-size: clamp(24px, 4.2vw, 34px);
+      line-height: 1.06;
+      letter-spacing: 0.025em;
+      color: #1c1410;
+    }
+
+    .briefing-text{
+      margin: 0 0 14px 0;
+      font-family: "IM Fell English", Georgia, serif;
+      font-size: clamp(16px, 2.2vw, 22px);
+      line-height: 1.35;
+      color: #2a211a;
+    }
+
+    .briefing-actions{
+      margin-top: 0;
+      display: block;
+    }
+
+    .briefing-btn{
+      border: 0;
+      background: #2f3a49;
+      color: #eef4ff;
+      font-family: "IM Fell English", Georgia, serif;
+      letter-spacing: 0.01em;
+      font-size: clamp(18px, 2.7vw, 22px);
+      font-variant: normal;
+      text-transform: none;
+      line-height: 1.1;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 160ms ease, background 160ms ease;
+      width: 100%;
+    }
+
+    .briefing-btn:hover{
+      transform: translateY(-1px);
+      background: #3c495a;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.18);
+    }
+
+    .scene{
+      position: relative;
+      width: 100%;
+      height: 100%;
+      isolation: isolate;
+      cursor: default;
+      touch-action: auto;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .map{
+      position: absolute;
+      inset: 0;
+      background: var(--map-bg);
+      filter: saturate(0.95) contrast(1.06);
+      transform: scale(1.02);
+      z-index: 1;
+    }
+
+    .vignette{
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(1200px 900px at 70% 50%, transparent 45%, rgba(0,0,0,0.78) 85%),
+        radial-gradient(900px 650px at 30% 40%, transparent 50%, rgba(0,0,0,0.55) 85%),
+        linear-gradient(90deg, rgba(0,0,0,0.42), rgba(0,0,0,0.10) 42%, rgba(0,0,0,0.28));
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .fog{
+      position: absolute;
+      inset: -20%;
+      background:
+        radial-gradient(closest-side at 30% 45%, rgba(255,255,255,0.06), transparent 70%),
+        radial-gradient(closest-side at 70% 35%, rgba(255,255,255,0.05), transparent 68%),
+        radial-gradient(closest-side at 60% 75%, rgba(255,255,255,0.04), transparent 72%);
+      filter: blur(18px);
+      opacity: 0.9;
+      pointer-events: none;
+      z-index: 3;
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+
+    @keyframes drift{
+      from { transform: translate3d(-1.5%, -1%, 0); }
+      to   { transform: translate3d(1.5%, 1%, 0); }
+    }
+
+    /* Header */
+    .header{
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      z-index: 10;
+      width: min(980px, 94%);
+      padding: 10px 14px;
+      pointer-events: none;
+    }
+
+    /* Stempel: achter de titel (en niet door de titel heen zichtbaar) */
+    .stamp{
+      display: inline-block;
+      margin: 0 auto 10px auto;
+
+      font-family: "IM Fell English SC", Georgia, serif;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 15px;
+
+      color: rgba(200, 0, 0, 0.70);
+      border: 3px solid rgba(200, 0, 0, 0.55);
+      padding: 8px 14px;
+
+      transform: rotate(-3deg);
+      background: rgba(0,0,0,0.10);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+      opacity: 0.95;
+
+      position: relative;
+      z-index: 0; /* achter de titel */
+    }
+
+    .title{
+      position: relative;
+      z-index: 2; /* voor de stempel */
+      font-family: "Mrs Saint Delafield", cursive;
+      font-size: clamp(60px, 6vw, 90px);
+      line-height: 0.9;
+      margin: 0;
+
+      /* Minder heftig dan eerder */
+      text-shadow: 0 4px 10px rgba(0,0,0,0.28);
+    }
+
+    .sub{
+      font-family: "IM Fell English", Georgia, serif;
+      font-style: italic;
+      font-size: 15px;
+      color: rgba(255,255,255,0.75);
+      margin: 1px 0 0 0;
+      text-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    }
+
+    /* Verborgen datum op random plek */
+    .hotspot{
+      position: absolute;
+      width: 320px;
+      z-index: 8;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+    }
+
+    .hotspot.is-ready{
+      opacity: 1;
+    }
+
+    .hotspot .date{
+      text-align: center;
+      opacity: 1;
+      transform: none;
+      padding: 12px 10px;
+
+      /* Belangrijk: geen achtergrond/filters, zodat er geen "vierkant" kan opduiken */
+      background: transparent;
+      border: 0;
+      outline: 0;
+      box-shadow: none;
+    }
+
+    .date .d{
+      font-family: "IM Fell English SC", Georgia, serif;
+      letter-spacing: 0.08em;
+      font-size: 40px;
+      margin: 0;
+      line-height: 1.05;
+      color: rgba(255,255,255,0.98);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.78), 0 6px 14px rgba(0,0,0,0.42);
+    }
+
+    .date .k{
+      font-family: "IM Fell English", Georgia, serif;
+      font-style: italic;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      text-transform: none;
+      margin: 0 0 2px 0;
+      color: rgba(255,255,255,0.99);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.86), 0 6px 10px rgba(0,0,0,0.44);
+    }
+
+    .date .t{
+      font-family: "IM Fell English", Georgia, serif;
+      font-style: italic;
+      margin-top: 8px;
+      font-size: 16px;
+      letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.97);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.72), 0 6px 12px rgba(0,0,0,0.36);
+    }
+
+    /* bewegend vergrootglas */
+    .magnifier{
+      position: absolute;
+      left: var(--mx);
+      top: var(--my);
+      width: var(--lens-size);
+      height: var(--lens-size);
+      transform: translate(-50%, -50%);
+      z-index: 12;
+      pointer-events: none;
+      filter: drop-shadow(0 18px 40px rgba(0,0,0,0.55));
+    }
+
+    /* ingezoomde achtergrond in lens */
+    .magnifier .lens-fill{
+      position: absolute;
+      inset: 28px;
+      border-radius: 50%;
+      overflow: hidden;
+
+      /* hard clippen, voorkomt vierkante artefacts */
+      clip-path: circle(50% at 50% 50%);
+      -webkit-clip-path: circle(50% at 50% 50%);
+    }
+
+    .magnifier .lens-fill::before{
+      content:"";
+      position:absolute;
+      inset:-260%;
+      background: var(--map-bg);
+      background-repeat: no-repeat;
+      filter: saturate(0.52) contrast(0.92) brightness(1.42);
+      opacity: 0.72;
+      transform:
+        scale(var(--lens-scale))
+        translate(
+          calc((50vw - var(--mx)) / var(--lens-scale)),
+          calc((50vh - var(--my)) / var(--lens-scale))
+        );
+      transform-origin: center;
+      will-change: transform;
+    }
+
+    .magnifier .lens-fill::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.05), transparent 52%),
+        rgba(255,255,255,0.006);
+      pointer-events:none;
+    }
+
+    /* glanslaag bovenop */
+    .magnifier .glare{
+      position:absolute;
+      inset: 28px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.055), transparent 48%),
+        radial-gradient(circle at 60% 70%, rgba(255,255,255,0.016), transparent 58%),
+        rgba(255,255,255,0.002);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+      pointer-events:none;
+    }
+
+    /* Footer met OSVS logo (100px hoog) */
+    .footer{
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    .osvs-logo{
+      height: 64px;
+      width: auto;
+      display: block;
+    }
+
+    .corner-hotspot{
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 86px;
+      height: 86px;
+      z-index: 14;
+      pointer-events: auto;
+      background: transparent;
+    }
+
+    .delft-tile{
+      position: absolute;
+      right: -405px;
+      bottom: -405px;
+      width: 420px;
+      height: 420px;
+      display: block;
+      z-index: 13;
+      pointer-events: none;
+      text-decoration: none;
+      border: 0;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+      background: url("tegeltje.svg") center / cover no-repeat;
+      transform: translate(0, 0);
+      transition: transform 520ms ease;
+    }
+
+    .delft-tile.show{
+      transform: translate(-78px, -78px);
+      pointer-events: auto;
+    }
+
+    @media (max-width: 860px){
+      :root{ --lens-size: 200px; }
+      .briefing-overlay{ padding: 14px; }
+      .briefing-card{
+        width: min(390px, 70vw);
+        padding: 10px;
+      }
+      .briefing-bubble{ padding: 14px 14px 12px; }
+      .briefing-avatar{
+        width: 86px;
+        height: 86px;
+        margin-bottom: 8px;
+      }
+      .briefing-avatar img{
+        width: 70px;
+        height: 70px;
+      }
+      .briefing-title{ font-size: clamp(22px, 8vw, 30px); }
+      .briefing-text{ font-size: 18px; }
+      .briefing-btn{ font-size: 20px; }
+      .briefing-btn{ width: 100%; }
+      .header{ top: 10px; }
+      .stamp{ font-size: 12px; padding: 6px 10px; margin-bottom: 6px; }
+      .title{ font-size: clamp(44px, 12vw, 62px); }
+      .sub{ font-size: 14px; margin-top: 0; }
+      .hotspot{ width: min(82vw, 320px); }
+      .date .k{ font-size: 12px; margin-bottom: 1px; }
+      .date .d{ font-size: 34px; }
+      .date .t{ font-size: 14px; }
+      .footer{ bottom: 12px; }
+      .osvs-logo{ height: 46px; }
+      .corner-hotspot{ width: 76px; height: 76px; }
+      .delft-tile{ width: 300px; height: 300px; right: -292px; bottom: -292px; }
+      .delft-tile.show{ transform: translate(-58px, -58px); }
+    }
+
+    @media (pointer:fine){
+      .scene{ cursor: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="scene" id="scene">
+    <div class="map" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="fog" aria-hidden="true"></div>
+
+    <div class="header">
+      <div class="stamp" aria-hidden="true">VERTROUWELIJK</div>
+      <h1 class="title">Save the date</h1>
+      <p class="sub">Onderzoek de pagina, vind de aanwijzing.</p>
+    </div>
+
+    <!-- Random verborgen datum -->
+    <div class="hotspot" id="hotspot" aria-hidden="true">
+      <div class="date">
+        <p class="k">Teamuitje</p>
+        <p class="d">30 juni</p>
+        <div class="t">12.00 tot 19.00 uur</div>
+      </div>
+    </div>
+
+    <!-- Bewegend vergrootglas -->
+    <div class="magnifier" id="magnifier" aria-hidden="true">
+      <svg viewBox="0 0 300 300" width="100%" height="100%" aria-hidden="true" style="overflow: visible;">
+        <defs>
+          <radialGradient id="glassGrad" cx="40%" cy="30%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0.02)"/>
+          </radialGradient>
+
+          <linearGradient id="metalGrad" x1="0" x2="1">
+            <stop offset="0%" stop-color="#ecd7b7"/>
+            <stop offset="100%" stop-color="#7a5a36"/>
+          </linearGradient>
+
+          <linearGradient id="woodGrad" x1="0" x2="1">
+            <stop offset="0%" stop-color="#7f4f28"/>
+            <stop offset="45%" stop-color="#9a6433"/>
+            <stop offset="100%" stop-color="#3f2414"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Ring + glas (vergelijkbaar met eerdere versie) -->
+        <circle cx="150" cy="150" r="121" fill="none" stroke="rgba(45,28,16,0.35)" stroke-width="6"/>
+        <circle cx="150" cy="150" r="120"
+                fill="url(#glassGrad)"
+                fill-opacity="var(--glass-opacity)"
+                stroke="url(#metalGrad)"
+                stroke-width="18"/>
+        <circle cx="150" cy="150" r="108" fill="none" stroke="rgba(255,242,220,0.38)" stroke-width="2"/>
+
+        <!-- Reflectie -->
+        <ellipse cx="125" cy="104" rx="40" ry="18"
+                 fill="rgba(255,255,255,0.12)"
+                 transform="rotate(-25 125 104)"/>
+
+        <!-- Klassiek handvat, buiten de lensring -->
+        <g transform="translate(150 142) rotate(35)">
+          <rect x="118" y="-8" width="30" height="30" rx="8" fill="url(#metalGrad)" stroke="rgba(255,236,195,0.4)" stroke-width="1.2"/>
+          <rect x="142" y="-12" width="142" height="36" rx="10" fill="url(#woodGrad)"/>
+          <rect x="151" y="-8" width="122" height="10" rx="5" fill="rgba(255,220,160,0.24)"/>
+          <path d="M154 8 L274 8" fill="none" stroke="rgba(66,39,20,0.42)" stroke-width="1.3" stroke-linecap="round"/>
+          <rect x="282" y="-12" width="8" height="36" rx="4" fill="#5a341c"/>
+          <ellipse cx="285.8" cy="-3.2" rx="2.1" ry="2.4" fill="rgba(255,220,165,0.28)"/>
+        </g>
+      </svg>
+
+      <div class="lens-fill"></div>
+      <div class="glare"></div>
+    </div>
+
+    <div class="footer" aria-hidden="true">
+      <svg class="osvs-logo" id="Layer_3" data-name="Layer 3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90.35 88.26" role="img" aria-label="OSVS logo">
+        <defs>
+          <style>
+            .cls-1 {
+              fill: #fff;
+            }
+          </style>
+        </defs>
+        <g id="Layer_1" data-name="Layer 1">
+          <g id="OSVS_-_02._Beeldmerk_Monochroom_diapositief" data-name="OSVS - 02. Beeldmerk – Monochroom diapositief">
+            <g>
+              <g>
+                <path class="cls-1" d="M33.61,86.09c-.61,1.76-1.88,2.5-3.26,2.02-1.38-.48-1.91-1.82-1.29-3.58.61-1.76,1.86-2.5,3.25-2.02,1.38.48,1.91,1.82,1.3,3.58ZM29.7,84.75c-.51,1.48-.14,2.49.84,2.83.98.34,1.9-.22,2.41-1.7.52-1.49.13-2.48-.84-2.82-.98-.34-1.89.22-2.4,1.69Z"/>
+                <path class="cls-1" d="M29.07,81.68l-2.24,4.57c-.1.21-.29.3-.5.19l-1.11-.54c-1.07-.53-1.43-1.42-.92-2.45.51-1.04,1.42-1.31,2.51-.77l.83.41.83-1.69c.08-.17.23-.23.4-.15l.09.04c.16.08.2.22.11.4ZM24.9,83.72c-.36.74-.15,1.32.56,1.67l.85.42,1.1-2.25-.85-.42c-.71-.35-1.31-.15-1.66.57Z"/>
+                <path class="cls-1" d="M25.17,79.8l-2.67,4.21c-.13.2-.32.26-.52.13l-2.34-1.49c-.17-.11-.21-.24-.12-.39l.03-.05c.09-.15.23-.16.4-.05l2.09,1.33,1.04-1.63-1.54-.98c-.18-.11-.22-.24-.12-.38l.02-.04c.1-.16.24-.18.41-.07l1.54.98,1.11-1.75-2.15-1.37c-.17-.11-.22-.23-.13-.38l.03-.05c.1-.15.24-.18.41-.07l2.4,1.53c.2.12.23.32.1.52Z"/>
+                <path class="cls-1" d="M21.59,77.35l-3.26,3.97c-.14.17-.33.21-.48.09l-.08-.06c-.14-.11-.16-.24-.12-.45l.76-5.08-2.77,3.37c-.14.16-.27.18-.4.07l-.08-.06c-.14-.11-.14-.24,0-.4l3.26-3.97c.15-.18.33-.22.46-.1l.07.06c.14.11.15.22.13.41l-.76,5.16,2.79-3.4c.12-.15.26-.18.41-.06l.05.04c.15.12.15.26.02.41Z"/>
+                <path class="cls-1" d="M17.53,74.03l-3.61,3.42c-.17.16-.37.18-.54,0l-1-1.06c-.74-.78-.79-1.6-.12-2.24.5-.47,1.07-.51,1.62-.16-.43-.66-.37-1.33.22-1.88.77-.73,1.6-.6,2.48.33l1,1.05c.16.17.13.38-.03.53ZM14.28,74.67c-.47-.5-1.04-.53-1.5-.09-.48.45-.46.99.04,1.52l.73.78,1.49-1.41-.76-.8ZM16.2,72.83c-.58-.61-1.11-.71-1.68-.17-.54.51-.48,1.06.08,1.65l.8.85,1.58-1.5-.78-.82Z"/>
+                <path class="cls-1" d="M14.88,70.92l-5.37,1.85c-.13.04-.28,0-.47-.26-.2-.27-.2-.42-.12-.53l3.28-4.64s.24-.01.37.15c.12.12.13.3-.01.5l-.96,1.35,1.21,1.62,1.57-.54c.25-.1.4-.02.47.11.12.17.08.37.03.39ZM11.24,69.77l-1.7,2.38,2.75-.97-1.05-1.4Z"/>
+                <path class="cls-1" d="M11.75,66.81l-4.4,2.56c-.2.12-.39.08-.51-.12l-.7-1.2c-.58-1-.41-1.87.54-2.42.84-.49,1.6-.28,2.14.47l.14.19,1-2.67s.28-.03.42.2c.09.15.07.3,0,.46l-1.02,2.59.24.41,1.83-1.07c.16-.09.31-.07.41.09l.05.08c.09.15.05.29-.14.4ZM8.67,66.65c-.41-.7-1-.81-1.62-.45-.68.4-.82.95-.41,1.65l.52.88,2.03-1.18-.53-.9Z"/>
+                <path class="cls-1" d="M9.46,62.92l-4.56,2.02c-.22.1-.41.04-.51-.17l-1.13-2.54c-.08-.19-.04-.32.12-.39l.06-.02c.16-.07.28,0,.36.18l1,2.26,1.77-.78-.74-1.67c-.09-.2-.04-.32.11-.39l.04-.02c.17-.08.3-.01.38.17l.74,1.67,1.9-.84-1.03-2.33c-.08-.19-.05-.32.1-.38l.06-.03c.16-.07.3-.01.38.17l1.15,2.61c.09.21,0,.4-.2.49Z"/>
+                <path class="cls-1" d="M6.41,56.61c-.25.06-.45-.15-.43-.17.31-.31.65-.86.47-1.62-.17-.68-.64-1.06-1.28-.91-.68.17-.75.79-.81,1.53-.06.86-.26,1.64-1.2,1.87-.94.23-1.71-.36-1.95-1.33-.14-.58-.07-1.14.15-1.47.09-.14.24-.27.38-.3.27-.07.45.17.45.19-.34.32-.58.83-.43,1.44.15.61.59.98,1.2.83.61-.15.68-.68.75-1.44.08-.94.26-1.72,1.25-1.96,1-.24,1.78.34,2.04,1.4.15.63.08,1.21-.17,1.59-.11.17-.27.3-.42.34Z"/>
+                <path class="cls-1" d="M.25,50.66c-.08-.65.09-1.18.36-1.53.18-.24.42-.41.62-.44.35-.04.46.33.44.37-.56.29-.92.85-.84,1.53.13,1.02,1.13,1.59,2.6,1.41,1.44-.18,2.27-.98,2.13-2.02-.1-.8-.68-1.15-1.3-1.24-.03-.04-.07-.46.3-.5.22-.03.55.08.77.25.42.26.73.78.82,1.44.18,1.47-.9,2.55-2.62,2.76-1.75.22-3.09-.58-3.27-2.04Z"/>
+                <path class="cls-1" d="M5.51,47.29H.3c-.2,0-.3-.11-.3-.29v-.08c0-.2.11-.3.3-.3h2.31s0-2.68,0-2.68H.31c-.2,0-.3-.11-.3-.29v-.09c0-.2.11-.29.3-.29h5.21c.2,0,.3.1.3.3v.09c0,.18-.11.29-.3.29h-2.32s0,2.68,0,2.68h2.32c.2,0,.3.11.3.31v.09c0,.18-.11.28-.3.28Z"/>
+                <path class="cls-1" d="M2.98,42c-1.85-.25-2.83-1.35-2.63-2.81.2-1.45,1.41-2.22,3.26-1.97,1.84.25,2.82,1.34,2.62,2.8-.2,1.45-1.41,2.23-3.26,1.98ZM3.54,37.9c-1.55-.21-2.47.35-2.61,1.38-.14,1.02.59,1.82,2.14,2.03,1.56.21,2.46-.37,2.6-1.38.14-1.02-.59-1.82-2.13-2.03Z"/>
+                <path class="cls-1" d="M6.33,36.66l-4.92-1.25c-.21-.05-.28-.17-.23-.34l.02-.09c.05-.18.17-.26.37-.21l4.71,1.19.52-2.05c.05-.2.17-.27.36-.22h.03c.18.05.26.17.21.37l-.59,2.35c-.06.23-.24.32-.48.26Z"/>
+                <path class="cls-1" d="M7.36,32.9l-4.67-1.73c-.23-.08-.32-.26-.24-.48l.96-2.6c.07-.19.19-.26.36-.2l.06.02c.17.06.21.19.13.38l-.86,2.32,1.81.67.63-1.71c.07-.2.19-.26.35-.2h.04c.17.08.22.21.15.4l-.63,1.71,1.95.72.88-2.39c.07-.19.18-.26.34-.21l.06.02c.17.06.22.2.15.39l-.99,2.67c-.08.22-.27.29-.49.21Z"/>
+                <path class="cls-1" d="M9,28.9l-4.57-2.34c-.2-.1-.28-.27-.19-.45l.05-.09c.08-.16.2-.21.41-.22l5.13-.33-3.88-1.99c-.19-.1-.24-.22-.16-.38l.05-.09c.08-.16.2-.19.39-.09l4.57,2.35c.21.11.28.27.2.43l-.04.08c-.08.16-.18.2-.37.21l-5.21.35,3.92,2.01c.17.09.23.22.14.38l-.03.06c-.08.17-.22.2-.39.11Z"/>
+                <path class="cls-1" d="M12.03,19.5l2.05,1.42s0,.12-.08.22c-.12.18-.29.18-.54.04-.19-.13-.39-.26-.59-.4.46.6.51,1.37.02,2.08-.78,1.12-2.31,1.13-3.69.17-1.43-.99-1.92-2.5-1.06-3.74.36-.53.83-.8,1.25-.89.32-.07.59-.02.74.08.29.2.12.54.06.56-.57-.15-1.19-.02-1.6.58-.59.85-.24,1.97.99,2.82,1.19.83,2.34.81,2.92-.03.48-.69.34-1.53-.38-2.11-.1-.08-.2-.15-.3-.22l-.7,1.01c-.12.17-.23.22-.38.11l-.04-.03c-.15-.11-.16-.23-.04-.4l.86-1.24c.13-.18.29-.19.5-.05Z"/>
+                <path class="cls-1" d="M14.53,19.99l-3.78-3.39c-.17-.16-.2-.35-.05-.52l.93-1.03c.77-.86,1.65-.96,2.46-.23.72.65.76,1.43.21,2.18l-.14.2,2.84.13c.05,0,.12.26-.06.46-.12.13-.26.16-.44.13l-2.78-.17-.31.35,1.58,1.41c.14.12.16.28.03.41l-.07.07c-.12.13-.26.13-.42,0ZM13.75,17.01c.54-.6.47-1.2-.07-1.67-.58-.52-1.15-.49-1.69.12l-.68.76,1.75,1.57.69-.78Z"/>
+                <path class="cls-1" d="M15.68,14.89c-1.22-1.41-1.24-2.88-.13-3.84,1.1-.96,2.53-.75,3.75.67,1.22,1.4,1.24,2.87.13,3.83-1.1.96-2.53.75-3.75-.65ZM18.79,12.18c-1.03-1.18-2.09-1.36-2.87-.68-.78.68-.75,1.75.27,2.94,1.03,1.19,2.09,1.35,2.86.67.78-.68.75-1.75-.27-2.93Z"/>
+                <path class="cls-1" d="M21.75,13.06l-2.78-4.14c-.13-.2-.11-.4.08-.53l2.31-1.55c.17-.11.31-.1.41.05l.03.05c.1.15.05.27-.12.39l-2.05,1.38,1.08,1.6,1.51-1.02c.18-.12.31-.1.4.04l.03.04c.11.16.07.29-.1.4l-1.52,1.02,1.16,1.72,2.11-1.42c.17-.11.3-.11.4.03l.04.05c.1.15.07.29-.1.4l-2.37,1.59c-.19.13-.39.08-.52-.11Z"/>
+                <path class="cls-1" d="M25.43,10.78l-2.36-4.5c-.11-.2-.07-.4.14-.52l1.09-.58c1.05-.55,1.98-.32,2.52.71.54,1.02.22,1.91-.86,2.48l-.82.43.87,1.66c.09.17.05.33-.12.41l-.09.04c-.16.08-.29.04-.39-.15ZM26.24,6.22c-.38-.72-.98-.9-1.68-.53l-.83.44,1.16,2.21.83-.44c.7-.37.89-.97.52-1.68Z"/>
+                <path class="cls-1" d="M33.31,7.43l-3.26-4.65c-.02-.07.13-.25.32-.31.19-.06.34,0,.45.2l2.81,4.21V1.82c0-.25.12-.37.27-.41.2-.06.42.03.42.09l-.12,5.67c0,.15-.08.27-.38.37-.29.09-.41.02-.5-.1Z"/>
+                <path class="cls-1" d="M36.5,6.33l-.95-4.98c-.04-.21.04-.32.21-.36l.1-.02c.18-.04.31.04.35.25l.92,4.77,2.08-.4c.2-.04.32.04.35.23v.03c.04.18-.04.31-.24.34l-2.38.46c-.24.05-.39-.08-.43-.32Z"/>
+                <path class="cls-1" d="M39.8,5.91l1.29-5.53c.03-.14.15-.24.47-.26.34-.03.46.05.51.18l2.18,5.25c.02.05-.12.21-.32.23-.17.03-.33-.05-.42-.28l-.63-1.53-2.02.16-.38,1.61c-.05.26-.2.35-.35.34-.2,0-.36-.13-.35-.18ZM42.71,3.44l-1.1-2.71-.64,2.85,1.75-.14Z"/>
+                <path class="cls-1" d="M44.39,5.55l1.92-5.34c.05-.13.18-.22.5-.21.34.01.45.11.49.24l1.55,5.46c.01.05-.14.19-.35.19-.17.01-.32-.09-.38-.33l-.45-1.59-2.02-.07-.56,1.56c-.08.26-.23.32-.38.3-.21-.02-.34-.17-.32-.22ZM47.57,3.43l-.78-2.82-.97,2.75,1.75.06Z"/>
+                <path class="cls-1" d="M49.56,5.69l.77-5.03c.04-.23.18-.36.41-.33l1.37.21c1.14.17,1.71.86,1.54,1.94-.15.96-.78,1.42-1.71,1.37h-.24s1.44,2.45,1.44,2.45c.02.05-.15.24-.42.2-.18-.03-.28-.13-.35-.3l-1.38-2.42-.47-.07-.32,2.1c-.03.18-.14.28-.33.26h-.1c-.18-.04-.26-.16-.22-.37ZM51.62,3.4c.8.12,1.26-.27,1.37-.97.12-.78-.23-1.23-1.03-1.36l-1.01-.15-.36,2.32,1.03.16Z"/>
+                <path class="cls-1" d="M55.42,1.54c.07-.23.25-.33.46-.28l1.15.33c1.59.46,2.2,1.76,1.71,3.46-.5,1.74-1.75,2.51-3.37,2.05l-1.07-.31c-.21-.06-.32-.27-.26-.47l1.38-4.79ZM58.07,4.88c.42-1.44-.02-2.4-1.23-2.75l-.85-.24-1.28,4.44.83.24c1.21.35,2.1-.23,2.52-1.68Z"/>
+                <path class="cls-1" d="M60.82,3.09c.07-.18.21-.25.38-.18l.09.03c.17.06.23.2.16.38l-1.84,4.88c-.07.18-.21.25-.37.18l-.09-.03c-.17-.06-.23-.2-.16-.38l1.84-4.87Z"/>
+                <path class="cls-1" d="M60.81,8.64l2.25-4.62c.1-.2.27-.29.44-.2l.09.04c.16.08.21.19.23.41l.44,5.11,1.91-3.92c.09-.19.22-.24.38-.16l.09.04c.16.08.19.2.1.39l-2.25,4.62c-.1.21-.27.29-.43.21l-.08-.04c-.16-.08-.2-.18-.22-.36l-.46-5.19-1.92,3.95c-.08.18-.21.23-.38.15l-.06-.03c-.17-.08-.2-.22-.12-.39Z"/>
+                <path class="cls-1" d="M70.27,11.49l-1.38,2.07s-.12,0-.22-.07c-.18-.12-.19-.28-.05-.54.13-.19.25-.39.39-.6-.59.47-1.36.54-2.08.06-1.13-.75-1.17-2.29-.24-3.69.97-1.45,2.46-1.96,3.71-1.13.53.36.82.81.91,1.24.08.32.04.59-.07.75-.19.29-.53.13-.56.07.14-.57,0-1.19-.61-1.59-.86-.57-1.97-.2-2.8,1.04-.8,1.21-.77,2.35.08,2.92.7.46,1.53.32,2.11-.42.08-.1.15-.2.21-.31l-1.02-.68c-.17-.11-.22-.22-.12-.38l.03-.04c.1-.16.22-.16.4-.04l1.25.83c.18.12.19.29.05.5Z"/>
+                <path class="cls-1" d="M69.9,13.94l3.25-3.78c.16-.18.36-.21.53-.06l2.11,1.81c.16.13.18.27.06.41l-.04.05c-.12.13-.25.13-.41,0l-1.88-1.61-1.26,1.47,1.39,1.19c.16.14.18.27.07.4l-.03.03c-.12.14-.26.14-.42,0l-1.39-1.19-1.35,1.57,1.93,1.66c.16.13.18.26.07.39l-.04.05c-.12.13-.26.14-.42,0l-2.16-1.86c-.17-.15-.18-.35-.03-.53Z"/>
+                <path class="cls-1" d="M73.07,16.86l3.79-3.47c.17-.15.36-.17.49-.02l.07.07c.12.13.13.26.06.46l-1.47,4.92,3.22-2.95c.16-.14.29-.14.41-.01l.07.07c.12.13.1.26-.05.39l-3.79,3.47c-.17.16-.35.17-.47.04l-.06-.07c-.12-.13-.12-.24-.07-.42l1.48-5-3.24,2.97c-.15.13-.28.14-.41,0l-.05-.05c-.13-.14-.11-.28.04-.41Z"/>
+                <path class="cls-1" d="M78.71,22.65c.22-.13.47,0,.46.03-.2.39-.36,1.01.04,1.68.37.6.93.82,1.5.47.6-.37.48-.98.31-1.7-.2-.84-.25-1.64.58-2.14.83-.5,1.74-.17,2.25.68.31.51.41,1.06.3,1.44-.05.16-.14.33-.27.41-.24.14-.48-.02-.49-.05.23-.41.3-.96-.03-1.5-.32-.53-.86-.76-1.4-.43-.53.32-.44.85-.28,1.6.21.92.28,1.72-.6,2.25-.87.53-1.8.21-2.36-.72-.34-.55-.44-1.12-.32-1.57.06-.2.17-.37.3-.45Z"/>
+                <path class="cls-1" d="M86.39,26.44c.27.59.28,1.15.13,1.56-.1.28-.28.52-.46.6-.32.15-.54-.17-.53-.21.45-.45.62-1.09.33-1.71-.43-.93-1.56-1.17-2.9-.54-1.31.61-1.86,1.62-1.42,2.57.34.73,1,.89,1.62.78.04.03.2.42-.14.57-.2.09-.55.09-.81,0-.48-.12-.94-.52-1.22-1.12-.62-1.34.08-2.7,1.65-3.43,1.6-.74,3.12-.39,3.74.94Z"/>
+                <path class="cls-1" d="M82.4,31.25l4.96-1.58c.19-.06.32,0,.38.18l.02.08c.06.19,0,.32-.2.38l-2.2.7.82,2.56,2.2-.7c.19-.06.32,0,.38.18l.03.08c.06.19-.01.31-.2.37l-4.96,1.58c-.19.06-.32,0-.38-.19l-.03-.08c-.05-.17.02-.3.2-.36l2.21-.71-.82-2.56-2.21.71c-.19.06-.32,0-.38-.2l-.03-.08c-.05-.17.02-.3.2-.36Z"/>
+                <path class="cls-1" d="M88.97,35.25c.19-.04.32.04.36.21l.02.09c.04.17-.04.3-.23.34l-5.09,1.12c-.19.04-.32-.04-.36-.21l-.02-.1c-.04-.17.04-.3.23-.34l5.08-1.12Z"/>
+                <path class="cls-1" d="M84.41,38.27l4.94-.68c.24-.03.41.08.44.31l.38,2.75c.03.2-.05.32-.22.34h-.06c-.18.03-.27-.06-.3-.26l-.34-2.45-1.91.26.25,1.81c.03.21-.05.32-.21.34h-.04c-.18.03-.29-.06-.32-.27l-.25-1.81-2.06.28.35,2.52c.03.2-.04.32-.2.34h-.06c-.18.03-.29-.06-.32-.26l-.39-2.82c-.03-.23.1-.38.33-.41Z"/>
+                <path class="cls-1" d="M89.94,42.5c.24,0,.39.15.4.36l.02,1.2c.03,1.65-1.04,2.61-2.81,2.64-1.8.03-2.92-.94-2.94-2.62l-.02-1.11c0-.22.16-.38.38-.39l4.98-.08ZM87.51,46.02c1.5-.03,2.29-.72,2.27-1.98v-.88s-4.63.08-4.63.08v.86c.04,1.26.85,1.94,2.36,1.92Z"/>
+                <path class="cls-1" d="M84.81,47.06l5.2,2.29c.13.06.2.19.17.51-.03.34-.13.44-.27.47l-5.56,1.18c-.05.01-.18-.15-.17-.36,0-.17.11-.31.35-.36l1.62-.34.21-2.01-1.51-.67c-.25-.1-.3-.25-.27-.4.03-.2.2-.33.24-.31ZM86.7,50.37l2.86-.59-2.68-1.16-.18,1.75Z"/>
+                <path class="cls-1" d="M89.34,53.36c.22.05.33.21.28.41l-.06.23c-.05.22-.16.26-.42.3l-3.45.58,2.81,2.09c.23.15.29.26.24.45l-.05.23c-.05.22-.22.31-.44.26l-5-1.19c-.19-.04-.28-.14-.23-.32l.03-.11c.04-.17.16-.23.35-.18l1.46.35,3.03.75-2.71-2.01c-.15-.11-.25-.18-.18-.47.07-.29.19-.31.38-.34l3.32-.56-3.03-.7-1.46-.35c-.19-.04-.28-.14-.23-.32l.03-.12c.04-.17.16-.22.35-.17l5,1.19Z"/>
+              </g>
+              <g>
+                <path class="cls-1" d="M45.25,80.11c-19.2,0-34.82-15.62-34.82-34.82S26.05,10.47,45.25,10.47s34.82,15.62,34.82,34.82-15.62,34.82-34.82,34.82ZM45.25,11.47c-18.65,0-33.82,15.17-33.82,33.82s15.17,33.82,33.82,33.82,33.82-15.17,33.82-33.82S63.9,11.47,45.25,11.47Z"/>
+                <path class="cls-1" d="M36.66,19.95c-5.78,0-9.32,4.24-9.32,11.7s3.54,11.67,9.28,11.67,9.32-4.21,9.32-11.7-3.54-11.67-9.28-11.67M36.66,39.12c-2.59,0-4.17-1.96-4.17-7.5s1.55-7.46,4.17-7.46,4.13,1.96,4.13,7.5-1.54,7.46-4.13,7.46"/>
+                <path class="cls-1" d="M62.39,39.79c-1.87,3.6-6.69,4.34-10.32,3.31-1.41-.42-2.9-1.27-3.74-1.94-.44-.36-.84-.82-.99-1.39-.29-1.16.41-2.34,1.51-2.69.91-.36,1.87.12,2.57.71,1.09.72,2.99,1.65,4.27,1.56,1.38-.09,2.61-.83,2.73-2.15.29-2.21-2.02-2.59-3.63-3.18-1.87-.66-4-1.38-5.3-2.77-3.63-3.91-1.25-10.62,4.28-11.26,2.95-.46,6.28.32,8.48,2.36,1.8,2.34-1.48,5.05-3.46,2.97-1.5-1.41-4.64-2.01-5.95-.09-1.17,2.42.84,3.43,3.45,4.21.71.25,1.48.5,2.14.75,3.98,1.26,5.89,5.52,3.99,9.55l-.03.06Z"/>
+                <path class="cls-1" d="M45.05,48.21c-.32-.55-.84-.94-1.45-1.11-.2-.05-.4-.08-.61-.08-1.08,0-2.03.73-2.31,1.78l-4.04,15.35-4.03-15.33c-.28-1.05-1.22-1.78-2.31-1.78-.2,0-.41.03-.61.08-1.27.33-2.03,1.64-1.7,2.91l4.93,18.43c.24.93,1.03,1.61,1.96,1.75.11.02.23.03.35.03h2.83c.12,0,.24-.01.35-.03.93-.14,1.71-.82,1.96-1.75l4.93-18.45c.16-.62.07-1.26-.25-1.81"/>
+                <path class="cls-1" d="M61.52,66.99c-1.87,3.6-6.69,4.34-10.32,3.31-1.41-.42-2.9-1.27-3.74-1.94-.44-.36-.84-.82-.99-1.39-.29-1.16.41-2.34,1.51-2.69.91-.36,1.87.12,2.57.71,1.09.72,2.99,1.65,4.27,1.56,1.38-.09,2.61-.83,2.73-2.15.29-2.21-2.02-2.59-3.63-3.18-1.87-.66-4-1.38-5.3-2.77-3.63-3.91-1.25-10.62,4.28-11.26,2.95-.46,6.28.32,8.48,2.36,1.8,2.34-1.48,5.05-3.46,2.97-1.5-1.41-4.64-2.01-5.95-.09-1.17,2.42.84,3.43,3.45,4.21.71.25,1.48.5,2.14.75,3.98,1.26,5.89,5.52,3.99,9.55l-.03.06Z"/>
+              </g>
+            </g>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="corner-hotspot" id="cornerHotspot" aria-hidden="true"></div>
+    <a class="delft-tile" id="delftTile" href="next.html" aria-label="Ga naar de volgende pagina"></a>
+  </div>
+
+  <div class="briefing-overlay" id="briefingOverlay" role="dialog" aria-modal="true" aria-labelledby="briefingTitle">
+    <div class="briefing-card">
+      <div class="briefing-bubble">
+        <div class="briefing-avatar" aria-hidden="true">
+          <img src="silhouette-round.svg" alt="">
+        </div>
+        <h2 class="briefing-title" id="briefingTitle">Welkom, speurneus.</h2>
+        <p class="briefing-text">Fijn dat je de link hebt geopend. Er ligt een aanwijzing verborgen op deze pagina. Volg het vergrootglas en onthul wat verstopt zit.</p>
+        <div class="briefing-actions">
+          <button class="briefing-btn primary" id="briefingStart" type="button">🔎 start het onderzoek</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const scene = document.getElementById("scene");
+    const hotspot = document.getElementById("hotspot");
+    const hotspotDate = hotspot.querySelector(".date");
+    const cornerHotspot = document.getElementById("cornerHotspot");
+    const delftTile = document.getElementById("delftTile");
+    const briefingOverlay = document.getElementById("briefingOverlay");
+    const briefingStart = document.getElementById("briefingStart");
+    const MOVE_EPS = 0.35;
+    const START_NORM_X = 0.68;
+    const START_NORM_Y = 0.58;
+    const START_EXCLUSION_PAD = 38;
+    let rafId = 0;
+    let pendingPointer = false;
+    let pendingX = 0;
+    let pendingY = 0;
+    let lastAppliedX = NaN;
+    let lastAppliedY = NaN;
+    let hotspotCenterX = 0;
+    let hotspotCenterY = 0;
+    let hotspotHalfW = 160;
+    let hotspotHalfH = 60;
+    let clipRadius = 90;
+    let interactiveStarted = false;
+
+    function setMouseVars(clientX, clientY){
+      const r = scene.getBoundingClientRect();
+      const x = Math.max(0, Math.min(r.width, clientX - r.left));
+      const y = Math.max(0, Math.min(r.height, clientY - r.top));
+      scene.style.setProperty("--mx", x + "px");
+      scene.style.setProperty("--my", y + "px");
+      checkReveal(x, y);
+    }
+
+    function flushPointerFrame(){
+      rafId = 0;
+      if (!pendingPointer) return;
+      pendingPointer = false;
+      setMouseVars(pendingX, pendingY);
+      lastAppliedX = pendingX;
+      lastAppliedY = pendingY;
+    }
+
+    function queuePointer(clientX, clientY){
+      if (typeof clientX !== "number" || typeof clientY !== "number") return;
+      if (
+        Number.isFinite(lastAppliedX) &&
+        Math.abs(clientX - lastAppliedX) < MOVE_EPS &&
+        Math.abs(clientY - lastAppliedY) < MOVE_EPS
+      ) return;
+
+      pendingX = clientX;
+      pendingY = clientY;
+      pendingPointer = true;
+      if (!rafId) rafId = window.requestAnimationFrame(flushPointerFrame);
+    }
+
+    function updateLensMetrics(){
+      const lensSizeRaw = getComputedStyle(scene).getPropertyValue("--lens-size");
+      const lensSize = parseFloat(lensSizeRaw) || 300;
+      clipRadius = Math.max(48, (lensSize / 2) - 34);
+    }
+
+    function getStartPointLocal(){
+      const r = scene.getBoundingClientRect();
+      const clientX = window.innerWidth * START_NORM_X;
+      const clientY = window.innerHeight * START_NORM_Y;
+      const x = Math.max(0, Math.min(r.width, clientX - r.left));
+      const y = Math.max(0, Math.min(r.height, clientY - r.top));
+      return { x, y };
+    }
+
+    function updateFromMouseEvent(e){
+      queuePointer(e.clientX, e.clientY);
+    }
+
+    function bindPointerTracking(){
+      window.addEventListener("mousemove", updateFromMouseEvent, { passive:true });
+      document.addEventListener("mousemove", updateFromMouseEvent, { passive:true, capture:true });
+      document.body.addEventListener("mousemove", updateFromMouseEvent, { passive:true, capture:true });
+      scene.addEventListener("mousemove", updateFromMouseEvent, { passive:true, capture:true });
+      window.addEventListener("pointermove", updateFromMouseEvent, { passive:true });
+      document.addEventListener("pointermove", updateFromMouseEvent, { passive:true, capture:true });
+      scene.addEventListener("mouseenter", updateFromMouseEvent, { passive:true, capture:true });
+      window.addEventListener("mouseover", updateFromMouseEvent, { passive:true, capture:true });
+      window.addEventListener("focus", () => {
+        queuePointer(window.innerWidth * 0.5, window.innerHeight * 0.5);
+      }, { passive:true });
+
+      window.addEventListener("touchstart", (e) => {
+        const t = e.touches[0];
+        if (!t) return;
+        queuePointer(t.clientX, t.clientY);
+      }, { passive:true });
+
+      window.addEventListener("touchmove", (e) => {
+        const t = e.touches[0];
+        if (!t) return;
+        queuePointer(t.clientX, t.clientY);
+      }, { passive:true });
+    }
+
+    function bindCornerEasterEgg(){
+      if (!cornerHotspot || !delftTile) return;
+      let hoverTimer = 0;
+      const nextUrl = delftTile.getAttribute("href") || "next.html";
+
+      function showTile(){
+        delftTile.classList.add("show");
+      }
+
+      function hideTile(){
+        delftTile.classList.remove("show");
+      }
+
+      cornerHotspot.addEventListener("mouseenter", () => {
+        window.clearTimeout(hoverTimer);
+        hoverTimer = window.setTimeout(showTile, 200);
+      }, { passive:true });
+
+      cornerHotspot.addEventListener("mouseleave", () => {
+        window.clearTimeout(hoverTimer);
+        hideTile();
+      }, { passive:true });
+
+      cornerHotspot.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+      });
+
+      cornerHotspot.addEventListener("click", () => {
+        window.location.href = nextUrl;
+      });
+
+      cornerHotspot.addEventListener("touchend", () => {
+        window.location.href = nextUrl;
+      }, { passive:true });
+    }
+
+    function randomHotspot(){
+      const r = scene.getBoundingClientRect();
+
+      const topSafe = 190;
+      const bottomSafe = 140;
+
+      const padX = 160;
+      const padY = 150;
+
+      const xMin = padX;
+      const xMax = Math.max(xMin + 10, r.width - padX);
+      const yMin = topSafe + padY;
+      const yMax = Math.max(yMin + 10, r.height - bottomSafe - padY);
+
+      const start = getStartPointLocal();
+      const minDistance =
+        clipRadius + Math.max(hotspotHalfW, hotspotHalfH) + START_EXCLUSION_PAD;
+
+      let x = xMin + Math.random() * (xMax - xMin);
+      let y = yMin + Math.random() * (yMax - yMin);
+      for (let i = 0; i < 24; i += 1) {
+        const candidateX = xMin + Math.random() * (xMax - xMin);
+        const candidateY = yMin + Math.random() * (yMax - yMin);
+        const dist = Math.hypot(candidateX - start.x, candidateY - start.y);
+        if (dist >= minDistance) {
+          x = candidateX;
+          y = candidateY;
+          break;
+        }
+      }
+
+      hotspot.style.left = x + "px";
+      hotspot.style.top = y + "px";
+      hotspotCenterX = x;
+      hotspotCenterY = y;
+      const hRect = hotspot.getBoundingClientRect();
+      hotspotHalfW = hRect.width / 2;
+      hotspotHalfH = hRect.height / 2;
+      hotspot.classList.add("is-ready");
+    }
+
+    function checkReveal(mx, my){
+      const localX = mx - (hotspotCenterX - hotspotHalfW);
+      const localY = my - (hotspotCenterY - hotspotHalfH);
+      const clipValue = `circle(${clipRadius}px at ${localX}px ${localY}px)`;
+      hotspotDate.style.clipPath = clipValue;
+      hotspotDate.style.webkitClipPath = clipValue;
+    }
+
+    function init(){
+      if (interactiveStarted) return;
+      interactiveStarted = true;
+      bindPointerTracking();
+      bindCornerEasterEgg();
+      updateLensMetrics();
+      randomHotspot();
+      queuePointer(window.innerWidth * START_NORM_X, window.innerHeight * START_NORM_Y);
+    }
+
+    function dismissBriefing(){
+      if (!briefingOverlay) {
+        init();
+        return;
+      }
+      briefingOverlay.classList.add("is-hidden");
+      window.setTimeout(() => {
+        briefingOverlay.setAttribute("aria-hidden", "true");
+      }, 260);
+      init();
+    }
+
+    function setupBriefing(){
+      if (!briefingOverlay || !briefingStart) {
+        init();
+        return;
+      }
+
+      briefingStart.addEventListener("click", dismissBriefing);
+      briefingStart.addEventListener("touchend", dismissBriefing, { passive:true });
+    }
+
+    window.addEventListener("resize", () => {
+      if (!interactiveStarted) return;
+      updateLensMetrics();
+      randomHotspot();
+    }, { passive:true });
+
+    setupBriefing();
+  </script>
+</body>
+</html>
