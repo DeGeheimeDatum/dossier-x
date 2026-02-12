@@ -430,9 +430,9 @@
     }
 
     .date .d{
-      font-family: "IM Fell English SC", Georgia, serif;
+      font-family: "IM Fell English", Georgia, serif;
       letter-spacing: 0.08em;
-      font-size: 40px;
+      font-size: 34px;
       margin: 0;
       line-height: 1.05;
       color: rgba(255,255,255,0.98);
@@ -442,12 +442,27 @@
     .date .k{
       font-family: "IM Fell English", Georgia, serif;
       font-style: italic;
-      font-size: 14px;
+      font-size: 15px;
+      font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: none;
-      margin: 0 0 2px 0;
+      margin: 0 0 10px 0;
       color: rgba(255,255,255,0.99);
-      text-shadow: 0 1px 2px rgba(0,0,0,0.86), 0 6px 10px rgba(0,0,0,0.44);
+      text-shadow: none;
+    }
+
+    .date .d .w{
+      font-family: "IM Fell English", Georgia, serif;
+      font-style: italic;
+      font-size: 1em;
+      font-weight: 400;
+      letter-spacing: 0.03em;
+      margin-right: 10px;
+      color: rgba(255,255,255,0.99);
+      text-shadow: none;
+      display: inline-block;
+      vertical-align: baseline;
+      text-transform: none;
     }
 
     .date .t{
@@ -602,8 +617,9 @@
       .title{ font-size: clamp(44px, 12vw, 62px); }
       .sub{ font-size: 14px; margin-top: 0; }
       .hotspot{ width: min(82vw, 320px); }
-      .date .k{ font-size: 12px; margin-bottom: 1px; }
-      .date .d{ font-size: 34px; }
+      .date .k{ font-size: 13px; margin-bottom: 8px; }
+      .date .d .w{ font-size: 1em; margin-right: 7px; }
+      .date .d{ font-size: 30px; }
       .date .t{ font-size: 14px; }
       .footer{ bottom: 12px; }
       .osvs-logo{ height: 46px; }
@@ -665,7 +681,7 @@
     <div class="hotspot" id="hotspot" aria-hidden="true">
       <div class="date">
         <p class="k">Teamuitje</p>
-        <p class="d">30 juni</p>
+        <p class="d"><span class="w">Dinsdag</span>30 juni</p>
         <div class="t">12.00 tot ±20.00 uur</div>
       </div>
     </div>
@@ -862,6 +878,7 @@
     let interactiveStarted = false;
     let stampDecoded = false;
     let dateForcedReveal = false;
+    let hasDecodedOnce = false;
     let lastStampTapTs = 0;
     let idleTimer = 0;
     let idleHintHideTimer = 0;
@@ -1112,6 +1129,11 @@
       const defaultText = "VERTROUWELIJK";
       const decodedText = "GEDECODEERD";
       const activateStamp = () => {
+        if (!hasDecodedOnce) {
+          hasDecodedOnce = true;
+          window.clearTimeout(idleTimer);
+          if (idleHint) idleHint.classList.remove("show");
+        }
         stampDecoded = !stampDecoded;
         dateForcedReveal = stampDecoded;
         playStampSfx();
@@ -1146,6 +1168,7 @@
     }
 
     function showIdleHint(){
+      if (hasDecodedOnce) return;
       if (!idleHint || idleHintShown) return;
       idleHintShown = true;
       idleHint.classList.add("show");
