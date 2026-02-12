@@ -491,17 +491,17 @@
 
     @media (pointer: coarse){
       .corner-hotspot{
-        right: 8px;
-        bottom: calc(env(safe-area-inset-bottom) + 66px);
-        width: 124px;
-        height: 124px;
+        right: 0;
+        bottom: calc(env(safe-area-inset-bottom) + 56px);
+        width: 104px;
+        height: 104px;
       }
 
       .delft-tile{
-        width: 248px;
-        height: 248px;
-        right: -182px;
-        bottom: calc(env(safe-area-inset-bottom) + 54px);
+        width: 236px;
+        height: 236px;
+        right: -212px;
+        bottom: calc(env(safe-area-inset-bottom) + 52px);
         transform: none;
         pointer-events: auto;
       }
@@ -810,13 +810,13 @@
     function randomHotspot(){
       const r = scene.getBoundingClientRect();
       const isCompact = window.matchMedia("(max-width: 860px)").matches;
-      const topSafe = isCompact ? 126 : 190;
-      const bottomSafe = isCompact ? 82 : 140;
+      const topSafe = isCompact ? 102 : 190;
+      const bottomSafe = isCompact ? 56 : 140;
 
-      const edgeFactorX = isCompact ? 0.72 : 1;
-      const edgeFactorY = isCompact ? 0.84 : 1;
-      const edgePadX = Math.max(40, (hotspotHalfW * edgeFactorX) + (isCompact ? 8 : 16));
-      const edgePadY = Math.max(36, (hotspotHalfH * edgeFactorY) + (isCompact ? 8 : 14));
+      const edgeFactorX = isCompact ? 0.56 : 1;
+      const edgeFactorY = isCompact ? 0.68 : 1;
+      const edgePadX = Math.max(26, (hotspotHalfW * edgeFactorX) + (isCompact ? 4 : 16));
+      const edgePadY = Math.max(24, (hotspotHalfH * edgeFactorY) + (isCompact ? 4 : 14));
 
       const xMin = edgePadX;
       const xMax = Math.max(xMin + 10, r.width - edgePadX);
