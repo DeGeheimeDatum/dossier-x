@@ -77,6 +77,13 @@
       justify-items:center;
     }
 
+    .hang-unit{
+      position: relative;
+      display: grid;
+      justify-items: center;
+      transform-origin: top center;
+    }
+
     .strings{
       position: absolute;
       top: 0;
@@ -114,6 +121,14 @@
       height: auto;
       display: block;
       filter: drop-shadow(0 12px 24px rgba(0,0,0,0.18));
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .pendulum.rattle .hang-unit{
+      animation: rattle 760ms cubic-bezier(0.2, 0.7, 0.15, 1) 1;
     }
 
     .back-link{
@@ -136,6 +151,50 @@
       transition: color 100ms linear;
     }
 
+    .sound-toggle{
+      position: fixed;
+      left: 14px;
+      bottom: calc(env(safe-area-inset-bottom) + 14px);
+      width: 30px;
+      height: 30px;
+      border: 0;
+      background: transparent;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      z-index: 25;
+      opacity: 0.92;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+
+    .sound-toggle:hover{
+      transform: translateY(-1px) scale(1.03);
+      opacity: 1;
+    }
+
+    .sound-toggle svg{
+      width: 24px;
+      height: 24px;
+      display: block;
+      overflow: visible;
+    }
+
+    .sound-toggle .icon-off{ display: none; }
+    .sound-toggle.is-muted .icon-on{ display: none; }
+    .sound-toggle.is-muted .icon-off{ display: block; }
+
+    .sound-toggle .speaker-fill{
+      fill: #fff;
+    }
+
+    .sound-toggle .mute-slash{
+      fill: none;
+      stroke: #d42020;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+    }
+
     .back-link:hover,
     .back-link:focus-visible{
       color: #ffffff;
@@ -147,6 +206,17 @@
       to  { transform: rotate(3.6deg); }
     }
 
+    @keyframes rattle{
+      0%{ transform: rotate(0deg); }
+      12%{ transform: rotate(-5.8deg); }
+      24%{ transform: rotate(4.6deg); }
+      36%{ transform: rotate(-3.8deg); }
+      48%{ transform: rotate(2.9deg); }
+      62%{ transform: rotate(-2.1deg); }
+      76%{ transform: rotate(1.3deg); }
+      100%{ transform: rotate(0deg); }
+    }
+
     @media (max-width: 700px){
       .strings{ width: 150px; height: 116px; }
       .string{ height: 114px; }
@@ -155,6 +225,12 @@
         bottom: calc(env(safe-area-inset-bottom) + 8px);
         font-size: clamp(11px, 3.2vw, 13px);
       }
+      .sound-toggle{
+        left: 10px;
+        bottom: calc(env(safe-area-inset-bottom) + 10px);
+        width: 28px;
+        height: 28px;
+      }
     }
   </style>
 </head>
@@ -162,14 +238,214 @@
   <div class="hanger" aria-label="Delftsblauw tegeltje aan een spijker">
     <div class="nail" aria-hidden="true"></div>
     <div class="pendulum">
-      <div class="strings" aria-hidden="true">
-        <div class="string left"></div>
-        <div class="string right"></div>
+      <div class="hang-unit">
+        <div class="strings" aria-hidden="true">
+          <div class="string left"></div>
+          <div class="string right"></div>
+        </div>
+        <img class="tile-svg" src="tegeltje.svg" alt="Delftsblauw tegeltje">
       </div>
-      <img class="tile-svg" src="tegeltje.svg" alt="Delftsblauw tegeltje">
     </div>
   </div>
   <a class="back-link" href="index.html">Terug naar het zoeken</a>
+  <audio id="sfxRattle" preload="auto">
+    <source src="sounds/freesound_community-cup-and-saucer-2-94933.mp3" type="audio/mpeg">
+  </audio>
+  <button class="sound-toggle" id="soundToggle" type="button" aria-label="Geluid uitzetten">
+    <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true">
+      <path class="speaker-fill" d="M3 9v6h4l5 4V5L7 9H3zm12.5 3c0-1.8-1-3.29-2.5-4.03v8.05c1.5-.73 2.5-2.23 2.5-4.02zm2.5 0c0 3.04-1.72 5.64-4.25 6.92l-.75.38V4.7l.75.38C16.28 6.36 18 8.96 18 12z"/>
+    </svg>
+    <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true">
+      <path class="speaker-fill" d="M3 9v6h4l5 4V5L7 9H3zm12.5 3c0-1.8-1-3.29-2.5-4.03v8.05c1.5-.73 2.5-2.23 2.5-4.02zm2.5 0c0 3.04-1.72 5.64-4.25 6.92l-.75.38V4.7l.75.38C16.28 6.36 18 8.96 18 12z"/>
+      <path class="mute-slash" d="M5 19 L20 4"/>
+    </svg>
+  </button>
+  <script>
+    const pendulum = document.querySelector(".pendulum");
+    const hangUnit = document.querySelector(".hang-unit");
+    const tileSvg = document.querySelector(".tile-svg");
+    const backLink = document.querySelector(".back-link");
+    const soundToggle = document.getElementById("soundToggle");
+    const sfxRattle = document.getElementById("sfxRattle");
+    const SOUND_PREF_KEY = "dossierx_muted";
+    let soundMuted = false;
+    let sfxCtx = null;
+    let lastRattleTs = 0;
+
+    function loadMutedState(){
+      try {
+        soundMuted = window.localStorage.getItem(SOUND_PREF_KEY) === "1";
+      } catch (_) {
+        soundMuted = false;
+      }
+    }
+
+    function saveMutedState(){
+      try {
+        window.localStorage.setItem(SOUND_PREF_KEY, soundMuted ? "1" : "0");
+      } catch (_) {}
+    }
+
+    function updateSoundToggleUi(){
+      if (!soundToggle) return;
+      soundToggle.classList.toggle("is-muted", soundMuted);
+      soundToggle.setAttribute("aria-label", soundMuted ? "Geluid aanzetten" : "Geluid uitzetten");
+    }
+
+    function bindSoundToggle(){
+      if (!soundToggle) return;
+      soundToggle.addEventListener("click", () => {
+        soundMuted = !soundMuted;
+        saveMutedState();
+        updateSoundToggleUi();
+      });
+    }
+
+    function getSfxCtx(){
+      if (soundMuted) return null;
+      if (sfxCtx) {
+        if (sfxCtx.state === "suspended") sfxCtx.resume().catch(() => {});
+        return sfxCtx;
+      }
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      sfxCtx = new AudioCtx();
+      if (sfxCtx.state === "suspended") sfxCtx.resume().catch(() => {});
+      return sfxCtx;
+    }
+
+    function synthTone(freq, duration, gain, type = "triangle", offset = 0){
+      const ctx = getSfxCtx();
+      if (!ctx) return;
+      const start = ctx.currentTime + offset;
+      const osc = ctx.createOscillator();
+      const amp = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, start);
+      amp.gain.setValueAtTime(0.0001, start);
+      amp.gain.exponentialRampToValueAtTime(gain, start + 0.006);
+      amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(amp);
+      amp.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration + 0.015);
+    }
+
+    function synthNoiseBurst(duration, gain, offset = 0, hp = 900, lp = 5600){
+      const ctx = getSfxCtx();
+      if (!ctx) return;
+      const start = ctx.currentTime + offset;
+      const sampleRate = ctx.sampleRate;
+      const length = Math.max(1, Math.floor(sampleRate * duration));
+      const buffer = ctx.createBuffer(1, length, sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < length; i += 1) {
+        const env = 1 - (i / length);
+        data[i] = ((Math.random() * 2) - 1) * env;
+      }
+
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+
+      const high = ctx.createBiquadFilter();
+      high.type = "highpass";
+      high.frequency.setValueAtTime(hp, start);
+
+      const low = ctx.createBiquadFilter();
+      low.type = "lowpass";
+      low.frequency.setValueAtTime(lp, start);
+
+      const amp = ctx.createGain();
+      amp.gain.setValueAtTime(0.0001, start);
+      amp.gain.exponentialRampToValueAtTime(gain, start + 0.004);
+      amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+      src.connect(high);
+      high.connect(low);
+      low.connect(amp);
+      amp.connect(ctx.destination);
+      src.start(start);
+      src.stop(start + duration + 0.02);
+    }
+
+    function playCeramicClink(offset = 0){
+      synthTone(1980, 0.055, 0.12, "triangle", offset);
+      synthTone(2640, 0.045, 0.095, "sine", offset + 0.004);
+      synthTone(1320, 0.082, 0.075, "square", offset + 0.008);
+      synthNoiseBurst(0.08, 0.08, offset, 1200, 6400);
+    }
+
+    function playRattleSfx(){
+      if (playSample(sfxRattle, 0.74)) return;
+      playCeramicClink(0);
+      playCeramicClink(0.08);
+      playCeramicClink(0.155);
+      synthTone(190, 0.15, 0.065, "triangle", 0.03);
+      synthNoiseBurst(0.18, 0.055, 0.11, 300, 1900);
+    }
+
+    function playBackSfx(){
+      synthTone(300, 0.05, 0.06, "triangle", 0);
+      synthTone(210, 0.09, 0.045, "sine", 0.02);
+    }
+
+    function playSample(el, volume = 0.5){
+      if (soundMuted || !el) return false;
+      try {
+        let target = el;
+        if (!el.paused && !el.ended) {
+          target = el.cloneNode(true);
+        } else {
+          el.currentTime = 0;
+        }
+        target.volume = volume;
+        const p = target.play();
+        if (p && typeof p.catch === "function") p.catch(() => {});
+        if (target !== el) {
+          target.addEventListener("ended", () => {
+            target.remove();
+          }, { once: true });
+        }
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function triggerRattle(){
+      if (!pendulum) return;
+      const now = performance.now();
+      if (now - lastRattleTs < 120) return;
+      lastRattleTs = now;
+      playRattleSfx();
+      pendulum.classList.remove("rattle");
+      void pendulum.offsetWidth;
+      pendulum.classList.add("rattle");
+    }
+
+    if (hangUnit && pendulum) {
+      hangUnit.addEventListener("animationend", (e) => {
+        if (e.animationName !== "rattle") return;
+        pendulum.classList.remove("rattle");
+      });
+    }
+
+    if (hangUnit){
+      hangUnit.addEventListener("click", triggerRattle);
+      hangUnit.addEventListener("touchend", triggerRattle, { passive: true });
+    } else if (tileSvg){
+      tileSvg.addEventListener("click", triggerRattle);
+    }
+
+    if (backLink){
+      backLink.addEventListener("click", () => {
+        playBackSfx();
+      });
+    }
+    loadMutedState();
+    bindSoundToggle();
+    updateSoundToggleUi();
+  </script>
   <script data-goatcounter="https://vanschelven.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
 </body>
