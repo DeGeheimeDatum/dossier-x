@@ -41,9 +41,16 @@
     }
 
     *{ box-sizing: border-box; }
-    html, body{ height: 100%; margin: 0; }
+    html, body{
+      height: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: #0f0f0f;
+    }
 
     body{
+      min-height: 100svh;
+      min-height: 100dvh;
       background:
         radial-gradient(1200px 700px at 70% 45%, rgba(255,255,255,0.08), transparent 55%),
         radial-gradient(900px 600px at 30% 30%, rgba(255,255,255,0.05), transparent 60%),
@@ -165,7 +172,10 @@
     .scene{
       position: relative;
       width: 100%;
-      height: 100%;
+      height: 100svh;
+      height: 100dvh;
+      min-height: 100svh;
+      min-height: 100dvh;
       isolation: isolate;
       cursor: default;
       touch-action: auto;
@@ -184,7 +194,7 @@
 
     .vignette{
       position: absolute;
-      inset: 0;
+      inset: -1px;
       background:
         radial-gradient(1200px 900px at 70% 50%, transparent 45%, rgba(0,0,0,0.78) 85%),
         radial-gradient(900px 650px at 30% 40%, transparent 50%, rgba(0,0,0,0.55) 85%),
@@ -477,6 +487,24 @@
       .corner-hotspot{ width: 76px; height: 76px; }
       .delft-tile{ width: 300px; height: 300px; right: -292px; bottom: -292px; }
       .delft-tile.show{ transform: translate(-58px, -58px); }
+    }
+
+    @media (pointer: coarse){
+      .corner-hotspot{
+        right: 8px;
+        bottom: calc(env(safe-area-inset-bottom) + 66px);
+        width: 124px;
+        height: 124px;
+      }
+
+      .delft-tile{
+        width: 248px;
+        height: 248px;
+        right: -182px;
+        bottom: calc(env(safe-area-inset-bottom) + 54px);
+        transform: none;
+        pointer-events: auto;
+      }
     }
 
     @media (pointer:fine){
@@ -781,17 +809,19 @@
 
     function randomHotspot(){
       const r = scene.getBoundingClientRect();
+      const isCompact = window.matchMedia("(max-width: 860px)").matches;
+      const topSafe = isCompact ? 126 : 190;
+      const bottomSafe = isCompact ? 82 : 140;
 
-      const topSafe = 190;
-      const bottomSafe = 140;
+      const edgeFactorX = isCompact ? 0.72 : 1;
+      const edgeFactorY = isCompact ? 0.84 : 1;
+      const edgePadX = Math.max(40, (hotspotHalfW * edgeFactorX) + (isCompact ? 8 : 16));
+      const edgePadY = Math.max(36, (hotspotHalfH * edgeFactorY) + (isCompact ? 8 : 14));
 
-      const padX = 160;
-      const padY = 150;
-
-      const xMin = padX;
-      const xMax = Math.max(xMin + 10, r.width - padX);
-      const yMin = topSafe + padY;
-      const yMax = Math.max(yMin + 10, r.height - bottomSafe - padY);
+      const xMin = edgePadX;
+      const xMax = Math.max(xMin + 10, r.width - edgePadX);
+      const yMin = Math.max(edgePadY, topSafe + edgePadY);
+      const yMax = Math.max(yMin + 10, r.height - bottomSafe - edgePadY);
 
       const start = getStartPointLocal();
       const minDistance =
@@ -799,7 +829,7 @@
 
       let x = xMin + Math.random() * (xMax - xMin);
       let y = yMin + Math.random() * (yMax - yMin);
-      for (let i = 0; i < 24; i += 1) {
+      for (let i = 0; i < 40; i += 1) {
         const candidateX = xMin + Math.random() * (xMax - xMin);
         const candidateY = yMin + Math.random() * (yMax - yMin);
         const dist = Math.hypot(candidateX - start.x, candidateY - start.y);
