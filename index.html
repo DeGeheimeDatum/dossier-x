@@ -502,8 +502,11 @@
         height: 236px;
         right: -212px;
         bottom: calc(env(safe-area-inset-bottom) + 8px);
+        z-index: 8;
         transform: none;
         pointer-events: auto;
+        clip-path: circle(0px at 100% 100%);
+        -webkit-clip-path: circle(0px at 100% 100%);
       }
     }
 
@@ -856,6 +859,19 @@
       const clipValue = `circle(${clipRadius}px at ${localX}px ${localY}px)`;
       hotspotDate.style.clipPath = clipValue;
       hotspotDate.style.webkitClipPath = clipValue;
+
+      if (window.matchMedia("(pointer: coarse)").matches && delftTile){
+        const sr = scene.getBoundingClientRect();
+        const tr = delftTile.getBoundingClientRect();
+        const tileLocalX = mx - (tr.left - sr.left);
+        const tileLocalY = my - (tr.top - sr.top);
+        const tileClip = `circle(${Math.max(52, clipRadius * 0.92)}px at ${tileLocalX}px ${tileLocalY}px)`;
+        delftTile.style.clipPath = tileClip;
+        delftTile.style.webkitClipPath = tileClip;
+      } else if (delftTile) {
+        delftTile.style.clipPath = "";
+        delftTile.style.webkitClipPath = "";
+      }
     }
 
     function init(){
